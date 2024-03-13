@@ -1,3 +1,4 @@
+from multiprocessing import Process
 from pathlib import Path
 import subprocess
 import secrets
@@ -15,12 +16,13 @@ def convert_seconds_to_human_readable(seconds: int):
 
 class ViAuCutter:
 
-    def __init__(self, file: str, part_size_mb: int, out: str):
+    def __init__(self, file: str, part_size_mb: int, out: str, paralell: int):
 
         self.file = file
         self.part_size_mb = int(part_size_mb)
         self.duration = self.get_duration(file=file)
         self.out = out
+        self.paralell = paralell
 
         self.base_path: Path = Path(__file__).resolve().parent
         self.file_size: int = os.stat(self.file).st_size
@@ -63,6 +65,7 @@ class ViAuCutter:
 
             os.mkdir(self.folder_name)
 
+        paralells: list = []
         for i in range(self.total_parts):
 
             start_time = i * self.part_duration
@@ -70,7 +73,31 @@ class ViAuCutter:
             command: list = self.initialize_command(
                 start=start_time, end=self.part_duration, count=i + 1
             )
-            subprocess.run(
-                command,
-                capture_output=True
+            p: Process = Process(
+                target=subprocess.run, args=(command,), kwargs={"capture_output": True}
             )
+            paralells.append(p)
+
+            if self.paralell > 0 and len(paralells) == self.paralell:
+
+                for process in paralells:
+
+                    process.start()
+
+                for process in paralells:
+
+                    process.join()
+
+                paralells.clear()
+
+            elif i + 1 == self.total_parts and paralells != self.paralell:
+
+                for process in paralells:
+
+                    process.start()
+
+                for process in paralells:
+
+                    process.join()
+
+                paralells.clear()
