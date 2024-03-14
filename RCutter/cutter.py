@@ -24,6 +24,8 @@ class ViAuCutter:
         self.out = out
         self.paralell = paralell
 
+        self.file_name: str = self.file.split("/")[-1] if "/" in self.file else self.file
+
         self.base_path: Path = Path(__file__).resolve().parent
         self.file_size: int = os.stat(self.file).st_size
         self.total_parts: int = math.ceil(self.file_size / (self.part_size_mb * 1024 * 1024))
@@ -56,10 +58,14 @@ class ViAuCutter:
             "ffmpeg", "-ss", convert_seconds_to_human_readable(start), "-i",
             self.file, "-t",
             convert_seconds_to_human_readable(end), "-c:v", "copy",
-            "-c:a", "copy", f"{self.folder_name}/{count}__{self.file}"
+            "-c:a", "copy", f"{self.folder_name}/{count}__{self.file_name}"
         ]
 
     def cut(self) -> None:
+
+        if not os.path.exists(self.out):
+
+            os.mkdir(self.out)
 
         if not os.path.exists(self.folder_name):
 
