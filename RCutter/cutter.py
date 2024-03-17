@@ -12,8 +12,8 @@ from .utils import convert_seconds_to_human_readable
 
 class PlayAble(ABC):
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def get_duration(file: str) -> float:
 
         pass
